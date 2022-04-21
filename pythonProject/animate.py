@@ -1,6 +1,5 @@
 from geovoronoi import voronoi_regions_from_coords
 import numpy as np
-from matplotlib.animation import FuncAnimation
 from shapely.geometry import MultiPolygon, Polygon, Point
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon as mPolygon
@@ -9,7 +8,10 @@ from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 import traja
 from traja import TrajaCollection
+from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
 import random
+import matplotlib.collections as clt
 
 
 
@@ -68,10 +70,37 @@ def CreatePatch(poly, area_override=None):
     patch.set_color(color)
     return patch
 
-def plot_voronoi(bounds, trjs, frame, num_traj):
+#def init(scatter, collection):
+   # return scatter, collection,
+
+
+
+
+
+def update(frame, bounds, trjs, num_traj):
+    #print(trjs)
+    ax.clear()
+    patches, points = plot_voronoi(frame+1, bounds, trjs, num_traj)
+    for patch in patches:
+        ax.add_patch(patch)
+    plt.scatter(points[0], points[1])
+
+
+
+
+
+
+
+
+
+def plot_voronoi(frame, bounds, trjs, num_traj):
+
+
+
+    patches = []
+    print(f"trjs {trjs}")
 
     # points
-
     coords = np.array([[trjs[i].loc[frame]['x'], trjs[i].loc[frame]['y']] for i in range(num_traj)])
 
     #DEFINE EXTERIOR POLYGONS HERE
@@ -93,9 +122,9 @@ def plot_voronoi(bounds, trjs, frame, num_traj):
         min_y=min(b[1], min_y)
         max_y=max(b[3], max_y)
 
-    fig, ax = plt.subplots()
-    ax.set_xlim(min_x-200, max_x+200)
-    ax.set_ylim(min_y-200, max_y+200)
+    #fig, ax = plt.subplots()
+    #ax.set_xlim(min_x-200, max_x+200)
+    #ax.set_ylim(min_y-200, max_y+200)
 
     # this creates a dictionary of polygons/multipolygons
     # and a dictionary of lists, indicating which point is in those polygons
@@ -118,22 +147,24 @@ def plot_voronoi(bounds, trjs, frame, num_traj):
             for poly in region_polys[i]:
                 if poly.contains(temp_point):
                     patch=CreatePatch(poly)
-                    ax.add_patch(patch)
+                    patches.append(patch)
                     temp_area=poly.area
             for poly in region_polys[i]:
                 if not poly.contains(temp_point):
                     patch=CreatePatch(poly, temp_area)
-                    ax.add_patch(patch)
+                    patches.append(patch)
 
         else:
             patch=CreatePatch(region_polys[i])
-            ax.add_patch(patch)
+            patches.append(patch)
 
     points=list(zip(*coords))
-    plt.scatter(points[0], points[1])
-    plt.title(f"timestep_{frame}")
-    plt.savefig(f'timestep_{frame}.png')
-    plt.show()
+    #plt.scatter(points[0], points[1])
+    #plt.title(f"timestep_{frame}")
+    #plt.savefig(f'timestep_{frame}.png')
+    #plt.show()
+
+    return patches, points
 
 
 
@@ -142,16 +173,27 @@ def plot_voronoi(bounds, trjs, frame, num_traj):
 
 if __name__=="__main__":
     num_traj = 10
-    colors = [(random.randint(0,255)/255, random.randint(0,255)/255, random.randint(0,255)/255, 0.5) for _ in range(num_traj)]
+    #colors = [(random.randint(0,255)/255, random.randint(0,255)/255, random.randint(0,255)/255, 0.5) for _ in range(num_traj)]
     trjs = generate_traj(num_traj)
     bounds = get_bounds(trjs, num_traj)
     # plot_voronoi(bounds, trjs, 700, num_traj)
     # print(colors)
 
-    for i in range(1, 1000, 100):
-        plot_voronoi(bounds, trjs, i, num_traj)
+    #for i in range(1, 1000, 100):
+        #plot_voronoi(bounds, trjs, i, num_traj)
 
     #plot_voronoi(bounds, trjs, 700, num_traj, colors)
+
+    fig, ax = plt.subplots()
+    ax.set_xlim(bounds[0]-200, bounds[1]+200)
+    ax.set_ylim(bounds[2]-200, bounds[3]+200)
+    anim = animation.FuncAnimation(fig, update, blit=False, interval=25, repeat=False, frames=1000, fargs=(bounds, trjs,
+                                    num_traj))
+    plt.show()
+
+
+
+
 
 
 
