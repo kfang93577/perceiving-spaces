@@ -14,11 +14,19 @@ import random
 
 
 def generate_traj(num_traj):
-    # generates num_trial amount of random trajectories
+    # GET DATA
+    # create dictionary to initialize traja collection
+    # can also initiate with df if given id column
     trjs = {ind: traja.generate(n=1000, random=True, seed=ind) for ind in range(num_traj)}
+    for trj in trjs:
+        derivs = traja.get_derivatives(trjs[trj])
+        ang = traja.calc_angle(trjs[trj])
+        trjs[trj] = trjs[trj].join(derivs).join(ang.rename('angles'))
     coll = TrajaCollection(trjs)
+    # feed dictionary into traja collection to plot all trajectories at once
     coll.plot()
     plt.show()
+    print(trjs)
     return trjs
 
 def get_bounds(trjs, num_traj):
@@ -31,6 +39,9 @@ def get_bounds(trjs, num_traj):
 
 
 def RingCoding(ob):
+    # The codes will be all "LINETO" commands, except for "MOVETO"s at the
+    # beginning of each subpath
+    # The ith path code dictate what to do at the ith vertex
     # Draws the polygon passed in
     n = len(ob.coords)
     codes = np.ones(n, dtype=Path.code_type) * Path.LINETO
@@ -49,14 +60,13 @@ def Pathify(polygon):
                 + [RingCoding(r) for r in polygon.interiors])
     return Path(vertices, codes)
 
-def CreatePatch(poly, area_override=None):
-    MAX_DENSITY = 0.75
-    area = poly.area
-    if area_override is not None:
-        area = area_override
-    density = 1 / area
-    #color = c
-    color = (min(1, density / MAX_DENSITY), max(0, (MAX_DENSITY - density) / MAX_DENSITY), 0, 0.5)
+def CreatePatch(poly, c, area_override=None):
+    #MAX_DENSITY = 0.75
+    #area = poly.area
+    #if area_override is not None:
+        #area = area_override
+    #density = 1 / area
+    color = c#(min(1, density / MAX_DENSITY), max(0, (MAX_DENSITY - density) / MAX_DENSITY), 0, 0.5)
     region_external_coords = list(poly.exterior.coords)
 
     if len(poly.interiors) > 0:
@@ -68,7 +78,7 @@ def CreatePatch(poly, area_override=None):
     patch.set_color(color)
     return patch
 
-def plot_voronoi(bounds, trjs, frame, num_traj):
+def plot_voronoi(bounds, trjs, frame, num_traj, colors):
 
     # points
 
@@ -117,16 +127,16 @@ def plot_voronoi(bounds, trjs, frame, num_traj):
             temp_point=Point(coords[point])
             for poly in region_polys[i]:
                 if poly.contains(temp_point):
-                    patch=CreatePatch(poly)
+                    patch=CreatePatch(poly, colors[i])
                     ax.add_patch(patch)
                     temp_area=poly.area
             for poly in region_polys[i]:
                 if not poly.contains(temp_point):
-                    patch=CreatePatch(poly, temp_area)
+                    patch=CreatePatch(poly, temp_area, colors[i])
                     ax.add_patch(patch)
 
         else:
-            patch=CreatePatch(region_polys[i])
+            patch=CreatePatch(region_polys[i], colors[i])
             ax.add_patch(patch)
 
     points=list(zip(*coords))
@@ -134,6 +144,11 @@ def plot_voronoi(bounds, trjs, frame, num_traj):
     plt.title(f"timestep_{frame}")
     plt.savefig(f'timestep_{frame}.png')
     plt.show()
+
+
+
+
+
 
 
 
@@ -149,9 +164,10 @@ if __name__=="__main__":
     # print(colors)
 
     for i in range(1, 1000, 100):
-        plot_voronoi(bounds, trjs, i, num_traj)
+        plot_voronoi(bounds, trjs, i, num_traj, colors)
 
     #plot_voronoi(bounds, trjs, 700, num_traj, colors)
+
 
 
 
