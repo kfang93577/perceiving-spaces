@@ -29,7 +29,7 @@ def generate_np_data(num_short, num_long):
         x_short_data = np.dstack(x_short_nps)
 
     x_long_nps = [x_short_data]
-    long_trjs = {ind: traja.generate(n=1000, random=True,step_length= 4, seed=ind) for ind in range(num_long)}
+    long_trjs = {ind: traja.generate(n=1000, random=True,step_length= 5, seed=ind+num_short) for ind in range(num_long)}
     for trj in long_trjs:
         derivs = traja.get_derivatives(long_trjs[trj])
         ang = traja.calc_angle(long_trjs[trj])
@@ -44,10 +44,32 @@ def generate_np_data(num_short, num_long):
     Y = np.array(y_short_nps)
     return X,Y
 
+import random
+from random import choice
+def generate_data_more(stepLengths, numTraj):
+    x_nps = []
+    y_nps = []
+    for i in range(numTraj):
+        s = choice(stepLengths)
+        traj = traja.generate(n=1000, random=True, step_length=s, seed=i)
+        derivs = traja.get_derivatives(traj)
+        ang = traja.calc_angle(traj)
+        traj = traj.join(derivs).join(ang.rename('angles'))
+        traj.drop(['displacement_time', 'speed_times', 'acceleration_times'], inplace=True, axis=1)
+        traj.to_numpy
+        x_nps.append(traj)
+        y_nps.append(s)
 
-def split_data(X, Y, num_short, num_long):
+    X = np.dstack(x_nps)
+    X = np.transpose(X)
+    Y = np.array(y_nps)
+    return X,Y
+
+
+
+def split_data(X, Y):
 # shuffle + split data set into training and testing set
-    all_indices = list(range(num_short+num_long))
+    all_indices = list(range(X.shape[0]))
     train_ind, test_ind = train_test_split(all_indices, test_size=0.1)
     X_train = X[train_ind, :, 2:]
     X_test = X[test_ind, :, 2:]
@@ -88,9 +110,14 @@ def concatenation(X_train, Y_train, X_test, Y_test):
 
 
 
-X, Y = generate_np_data(30, 30)
-X_train, Y_train, X_test, Y_test = split_data(X, Y, 30, 30)
+X, Y = generate_np_data(50, 50)
+X_train, Y_train, X_test, Y_test = split_data(X, Y)
 print(X_train.shape)
+print(concatenation(X_train, Y_train, X_test, Y_test))
+print(ColEnsemble(X_train, Y_train, X_test, Y_test))
+
+X, Y = generate_data_more(range(1, 101), 100)
+X_train, Y_train, X_test, Y_test = split_data(X, Y)
 print(concatenation(X_train, Y_train, X_test, Y_test))
 print(ColEnsemble(X_train, Y_train, X_test, Y_test))
 
