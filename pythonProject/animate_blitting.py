@@ -12,6 +12,8 @@ from traja import TrajaCollection
 from matplotlib.animation import FuncAnimation
 import matplotlib.animation as animation
 from random import random
+from IPython.display import display
+import pandas as pd
 import matplotlib.collections as clt
 
 
@@ -23,6 +25,8 @@ def generate_traj(num_traj):
         derivs = traja.get_derivatives(trjs[trj])
         ang = traja.calc_angle(trjs[trj])
         trjs[trj] = trjs[trj].join(derivs).join(ang.rename('angles'))
+        trjs[trj].drop(['displacement_time', 'speed_times', 'acceleration_times'], inplace=True, axis=1)
+        trjs[trj].to_csv('test_csv.csv')
     coll = TrajaCollection(trjs)
     coll.plot()
     plt.show()
@@ -119,7 +123,8 @@ if __name__=="__main__":
     num_traj = 10
     trjs = generate_traj(num_traj)
     bounds = get_bounds(trjs, num_traj)
-    colors = [(random(), random(), random()) for _ in range(num_traj)]
+    #colors = [(random(), random(), random()) for _ in range(num_traj)]
+    colors = (47/255, 85/255, 138/255)
     # plot_voronoi(bounds, trjs, 700, num_traj)
     # print(colors)
 
@@ -139,8 +144,10 @@ if __name__=="__main__":
     x = [-600, 400]
     y = [-400, 400]
     col = clt.PatchCollection([], animated=True)
-    ax.set_xlim(bounds[0] - 200, bounds[1] + 200)
-    ax.set_ylim(bounds[2] - 200, bounds[3] + 200)
+    #ax.set_xlim(bounds[0] - 200, bounds[1] + 200)
+    #ax.set_ylim(bounds[2] - 200, bounds[3] + 200)
+    ax.set_xlim(-200, 200)
+    ax.set_ylim(-200, 200)
     ax.add_collection(col)
     col.set(edgecolor='b', facecolor=colors, alpha=0.5)
 
@@ -154,12 +161,13 @@ if __name__=="__main__":
         col.set_paths(patches)
         return scat, col
 
-    anim = animation.FuncAnimation(fig, update, blit=True, interval=100, repeat=False, frames=999, fargs=(shapely_poly, trjs,
+    anim = animation.FuncAnimation(fig, update, blit=True, interval=100, repeat=False, frames=100, fargs=(shapely_poly, trjs,
                                     num_traj))
     plt.show()
     FFwriter = animation.FFMpegWriter()
     anim.save('voronoi_animation_blitting.mp4', writer=FFwriter)
 
-    print(trjs)
+    #print(trjs)
+    display(trjs[1])
 
 
