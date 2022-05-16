@@ -70,7 +70,7 @@ def generate_data_more(stepLengths, numTraj):
 def split_data(X, Y):
 # shuffle + split data set into training and testing set
     all_indices = list(range(X.shape[0]))
-    train_ind, test_ind = train_test_split(all_indices, test_size=0.1)
+    train_ind, test_ind = train_test_split(all_indices, test_size=0.4)
     X_train = X[train_ind, :, 2:]
     X_test = X[test_ind, :, 2:]
     Y_train = Y[train_ind]
