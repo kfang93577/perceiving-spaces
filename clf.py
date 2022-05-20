@@ -107,9 +107,6 @@ def concatenation(X_train, Y_train, X_test, Y_test):
     return score
 
 
-
-
-
 X, Y = generate_np_data(50, 50)
 X_train, Y_train, X_test, Y_test = split_data(X, Y)
 print(X_train.shape)
