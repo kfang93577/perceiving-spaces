@@ -45,8 +45,8 @@ def RingCoding(ob):
 
 def Pathify(polygon):
     vertices = np.concatenate(
-                    [np.asarray(polygon.exterior)]
-                    + [np.asarray(r) for r in polygon.interiors])
+                    [np.array(polygon.exterior.coords)]
+                    + [np.array(r.coords) for r in polygon.interiors])
     codes = np.concatenate(
                 [RingCoding(polygon.exterior)]
                 + [RingCoding(r) for r in polygon.interiors])
@@ -93,7 +93,7 @@ def plot_voronoi(frame, bounds, trjs, num_traj):
 
 
     patches = []
-    print(f"trjs {trjs}")
+    #print(f"trjs {trjs}")
 
     # points
     coords = np.array([[trjs[i].loc[frame]['x'], trjs[i].loc[frame]['y']] for i in range(num_traj)])
@@ -110,7 +110,7 @@ def plot_voronoi(frame, bounds, trjs, num_traj):
 
     min_x, min_y = np.inf, np.inf
     max_x, max_y = -np.inf, -np.inf
-    for poly in shapely_poly:
+    for poly in shapely_poly.geoms:
         b=poly.bounds
         min_x=min(b[0], min_x)
         max_x=max(b[2], max_x)
@@ -121,12 +121,12 @@ def plot_voronoi(frame, bounds, trjs, num_traj):
         if type(region_polys[i]) is MultiPolygon:
             point=region_pts[i][0]
             temp_point=Point(coords[point])
-            for poly in region_polys[i]:
+            for poly in region_polys[i].geoms:
                 if poly.contains(temp_point):
                     patch=CreatePatch(poly)
                     patches.append(patch)
                     temp_area=poly.area
-            for poly in region_polys[i]:
+            for poly in region_polys[i].geoms:
                 if not poly.contains(temp_point):
                     patch=CreatePatch(poly, temp_area)
                     patches.append(patch)
@@ -142,7 +142,7 @@ def df_details(trjs):
         derivs = traja.get_derivatives(trjs[trj])
         ang = traja.calc_angle(trjs[trj])
         trjs[trj] = trjs[trj].join(derivs).join(ang.rename('angles'))
-    print(trjs)
+
 
 
 
@@ -153,7 +153,7 @@ if __name__=="__main__":
     bounds = get_bounds(trjs, num_traj)
     df_details(trjs)
     # plot_voronoi(bounds, trjs, 700, num_traj)
-    # print(colors)
+
 
     #for i in range(1, 1000, 100):
         #plot_voronoi(bounds, trjs, i, num_traj)
